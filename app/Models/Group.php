@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+
 class Group extends Model
 {
     use HasFactory;
@@ -45,19 +46,28 @@ class Group extends Model
     public function toConversationArray()
     {
         return [
-            'id'          => $this->id,
-            'name'        => $this->name,
-            'description' => $this->description,
-            'is_group'    => true,
-            'is_user'     => false,
-            'owner_id'    => $this->owner_id,
-            'users'       => $this->users,
-            'user_ids'    => $this->users->pluck('id'),
-            'created_at'  => $this->created_at,
-            'updated_at'  => $this->updated_at,
-            'last_message' => $this->last_message,
+            'id'                => $this->id,
+            'name'              => $this->name,
+            'description'       => $this->description,
+            'is_group'          => true,
+            'is_user'           => false,
+            'owner_id'          => $this->owner_id,
+            'users'             => $this->users,
+            'user_ids'          => $this->users->pluck('id'),
+            'created_at'        => $this->created_at,
+            'updated_at'        => $this->updated_at,
+            'last_message'      => $this->last_message,
             'last_message_date' => $this->last_message_date,
 
         ];
+    }
+
+    public static function updateGroupWithMessage($groupId,$message)
+    {
+        return self::updateOrCreate(
+            ['id' => $groupId],
+            ['last_message_id' => $message->id]
+        );
+
     }
 }
