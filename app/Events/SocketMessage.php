@@ -17,18 +17,20 @@ class SocketMessage implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
+    public Message $message;
+
     /**
      * Create a new event instance.
      */
-    public function __construct(public Message $message)
+    public function __construct(Message $message)
     {
-        //
+        $this->message = $message;
     }
 
     public function broadcastWith()
     {
         return [
-          'message' => new MessageResource($this->message),
+            'message' => new MessageResource($this->message),
         ];
     }
 
@@ -40,13 +42,12 @@ class SocketMessage implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         $m        = $this->message;
-        $channels = [
+        $channels = [];
 
-        ];
         if ($m->group_id) {
             $channels[] = new PrivateChannel('message.group.' . $m->group_id);
-        }else{
-            new PrivateChannel('message.users.' . collect([$m->sender_id . '-' . $m->receiver_id])->sort()->implode('-'));
+        } else {
+            $channels[] = new PrivateChannel('message.user.' . collect([$m->sender_id . '-' . $m->receiver_id])->sort()->implode('-'));
         }
         return $channels;
     }

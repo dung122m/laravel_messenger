@@ -1,14 +1,57 @@
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
 import {Link, usePage} from '@inertiajs/react';
+import {useEventBus} from "@/EventBus";
 
-export default function Authenticated({header, children }) {
+export default function Authenticated({header, children}) {
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
-    const page = usePage()  ;
+    const page = usePage();
+    const conversations = page.props.conversation;
     const user = page.props.auth.user;
+    const {emit} = useEventBus();
+    useEffect(() => {
+        conversations.forEach((conversation) => {
+            let channel = `message.group.${conversation.id}`;
+            if (conversation.is_user) {
+                channel = `message.user.${[parseInt(user.id), parseInt(conversation.id)].sort((a, b) => a - b).join('-')}`;
+            }
+
+            Echo.private(channel)
+                .error((error) => {
+                    console.error(error);
+                })
+                .listen('SocketMessage', (e) => {
+
+                    const message = e.message;
+                    emit('message.create', message);
+                    if (message.sender_id === user.id) {
+                        return;
+                    }
+                    emit("newMessageNotification", {
+                        user: message.sender,
+                        group_id: message.group_id,
+                        message: message.message || `Shared ${message.attachments.length === 1} ?
+                         "an attachment"
+                         : "${message.attachments.length} attachments"`,
+                    });
+                });
+
+        });
+        return () => {
+            conversations.forEach((conversation) => {
+                let channel = `message.group.${conversation.id}`;
+                if (conversation.is_user) {
+                    channel = `message.user.${[parseInt(user.id), parseInt(conversation.id)]
+                        .sort((a, b) => a - b)
+                        .join('-')}`;
+                }
+                Echo.leave(channel);
+            })
+        }
+    }, [conversations]);
     return (
         <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col h-screen scrollbar-thin">
             <nav className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
@@ -17,7 +60,8 @@ export default function Authenticated({header, children }) {
                         <div className="flex">
                             <div className="shrink-0 flex items-center">
                                 <Link href="/">
-                                    <ApplicationLogo className="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
+                                    <ApplicationLogo
+                                        className="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200"/>
                                 </Link>
                             </div>
 

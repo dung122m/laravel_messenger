@@ -64,40 +64,46 @@ class MessageController extends Controller
         return MessageResource::collection($messages);
     }
 
-    public function store(StoreMessageRequest $request)
+    public function store(StoreMessageRequest $request): MessageResource
     {
-        $data              = $request->validated();
+        $data = $request->validated();
         $data['sender_id'] = auth()->id();
-        $receiverId        = $data['receiver_id'] ?? null;
-        $groupId           = $data['group_id'] ?? null;
-        $files             = $data['attachments'] ?? [];
-        $message           = Message::create($data);
-        $attachments       = [];
+        $receiverId = $data['receiver_id'] ?? null;
+        $groupId = $data['group_id'] ?? null;
+        $files = $data['attachments'] ?? [];
+        $message = (new Message)->create($data);
+        $attachments = [];
+
         if ($files) {
             foreach ($files as $file) {
                 $directory = 'attachments/' . Str::random(32);
                 Storage::makeDirectory($directory);
+
+                $path = $file->storeAs($directory, $file->getClientOriginalName(), 'public');
+
                 $model = [
                     'message_id' => $message->id,
                     'name' => $file->getClientOriginalName(),
                     'mime' => $file->getClientMimeType(),
+                    'path' => $path,
                     'size' => $file->getSize(),
-                    'path' => $file->store($directory,'public')
                 ];
-                $attachment = MessageAttachment::create($model);
+                $attachment = (new MessageAttachment)->create($model);
                 $attachments[] = $attachment;
-
             }
             $message->attachments = $attachments;
         }
-        if ($receiverId) {
-          Conversation::updateConversationWithMessage($receiverId,auth()->id(),$message);
-        }
-        if($groupId){
-            Group::updateGroupWithMessage($groupId,$message);
 
+        if ($receiverId) {
+            Conversation::updateConversationWithMessage($receiverId, auth()->id(), $message);
         }
+
+        if ($groupId) {
+            Group::updateGroupWithMessage($groupId, $message);
+        }
+
         SocketMessage::dispatch($message);
+
         return new MessageResource($message);
     }
 

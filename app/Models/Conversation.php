@@ -46,6 +46,7 @@ class Conversation extends Model
         })->first();
         if ($conversation) {
             $conversation->last_message_id = $message->id;
+            $conversation->save();
         } else {
             Conversation::create([
                 'user_id1'        => $userId1,

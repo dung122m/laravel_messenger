@@ -3,7 +3,7 @@ import {useEffect, useState} from "react";
 import TextInput from "@/Components/TextInput.jsx";
 import ConversationItem from "@/Components/App/ConversationItem.jsx";
 import {PencilSquareIcon} from "@heroicons/react/24/solid";
-
+import {useEventBus} from "@/EventBus.jsx";
 const ChatLayout = ({children}) => {
     const page = usePage();
     const conversations = page.props.conversation;
@@ -11,75 +11,109 @@ const ChatLayout = ({children}) => {
     const [onlineUsers, setOnlineUsers] = useState({});
     const [localConversations, setLocalConversations] = useState(conversations);
     const [sortedConversations, setSortedConversations] = useState([]);
+    const {on} = useEventBus();
     const onSearch = (e) => {
         const search = e.target.value.toLowerCase();
         setLocalConversations(
             conversations.filter(
                 (conversation) => {
                   return conversation.name.toLowerCase().includes(search)
-
                 }
             )
         )
     }
+    const messageCreated = (message) => {
+        setLocalConversations((oldUsers) => {
+            return oldUsers.map((user) => {
+                if (message.receiver_id &&
+                    !user.is_group &&
+                    (user.id == message.sender_id || user.id == message.receiver_id)
+                ) {
+                    user.last_message = message.message;
+                    user.last_message_date = message.created_at;
+                    return user;
+                }
+
+                if (message.group_id && user.is_group && user.id == message.group_id) {
+                    user.last_message = message.message;
+                    user.last_message_date = message.created_at;
+                    return user;
+                }
+
+                return user;
+            })
+        });
+    }
+    useEffect(() => {
+        const offCreated = on('message.create', messageCreated);
+        return () => {
+            offCreated();
+
+        }
+    }, [on]);
+    useEffect(() => {
+        setLocalConversations(conversations)
+    }, [conversations]);
+
     const isUserOnline = (userId) => onlineUsers[userId];
     useEffect(() => {
         setSortedConversations(
             localConversations.sort((a, b) => {
-                    if (a.blocked_at && b.blocked_at) {
-                        return a.blocked_at > b.blocked_at ? 1 : -1;
-                    } else if (a.blocked_at) {
-                        return 1;
-                    } else if (b.blocked_at) {
-                        return -1;
-                    }
-                    if (a.last_message_date && b.last_message_date) {
-                        return b.last_message_date.localeCompare(
-                            a.last_message_date
-                        )
-                    } else if (a.last_message_date) {
-                        return -1;
-                    } else {
-                        return 0;
-                    }
+                if (a.blocked_at && b.blocked_at) {
+                    return a.blocked_at > b.blocked_at ? 1 : -1;
+                } else if (a.blocked_at) {
+                    return 1;
+                } else if(b.blocked_at) {
+                    return -1;
                 }
-            )
+                if (a.last_message_date && b.last_message_date) {
+                    return b.last_message_date.localeCompare(
+                        a.last_message_date
+                    );
+                } else if (a.last_message_date) {
+                    return -1;
+                } else if(b.last_message_date) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            })
         )
     }, [localConversations]);
+
     useEffect(() => {
         Echo.join('online')
             .here((users) => {
-                const onlineUsersObj = Object.fromEntries(
-                    (users.map(
-                        (user) => [user.id, user]))
+                const onlineUsersObject = Object.fromEntries(
+                    users.map((user) => [user.id, user])
                 );
+
                 setOnlineUsers((prevOnlineUsers) => {
-                    return {...prevOnlineUsers, ...onlineUsersObj};
-                })
+                    return { ...prevOnlineUsers, ...onlineUsersObject}
+                });
             })
             .joining((user) => {
                 setOnlineUsers((prevOnlineUsers) => {
-                    const updatedUsers = {...prevOnlineUsers};
+                    const updatedUsers = { ...prevOnlineUsers };
                     updatedUsers[user.id] = user;
                     return updatedUsers;
                 })
-
             })
-            .leaving((users) => {
+            .leaving((user) => {
                 setOnlineUsers((prevOnlineUsers) => {
-                    const updatedUsers = {...prevOnlineUsers};
-                    delete updatedUsers[users.id];
+                    const updatedUsers = { ...prevOnlineUsers };
+                    delete updatedUsers[user.id];
                     return updatedUsers;
                 })
-            })
-            .error((error) => {
-                console.error(error);
+            }).error((error) => {
+            console.error(error)
+        })
 
-            });
         return () => {
-            Echo.leave('online');
+            Echo.leave("online");
         }
     }, []);
+
 
     return(
         <div className="flex-1 w-full overflow-hidden flex">
@@ -89,7 +123,7 @@ const ChatLayout = ({children}) => {
                 }`}>
                 <div className="flex items-center justify-between py-2 px-3 text-xl font-medium">
                     My Conversation
-                    <div className="tooltip tooltip-left" data-tip="create new group">
+                    <div className="tooltip tooltip-left" data-tip="Create new group">
                         <button className="text-gray-700 hover:text-gray-200">
                             <PencilSquareIcon className="w-4 h-4 inline-block ml-2"/>
 
