@@ -7,6 +7,7 @@ import ConversationHeader from "@/Components/App/ConversationHeader.jsx";
 import MessageItem from "@/Components/App/MessageItem.jsx";
 import MessageInput from "@/Components/App/MessageInput.jsx";
 import {useEventBus} from "@/EventBus.jsx";
+import AttachmentPreviewModal from "@/Components/App/AttachmentPreviewModal.jsx";
 
 function Home({selectedConversation = null, messages = null}) {
     const messagesCtrRef = useRef(null);
@@ -16,7 +17,8 @@ function Home({selectedConversation = null, messages = null}) {
     const [scrollFromBottom, setScrollFromBottom] = useState(0);
     const [noMoreMessages, setNoMoreMessages] = useState(false);
     const [isNewMessage, setIsNewMessage] = useState(false); // Flag to determine if a new message is added
-
+    const [showAttachmentsPreview, setShowAttachmentsPreview] = useState(false);
+    const [previewAttachment, setPreviewAttachment] = useState({});
     const loadMoreMessages = useCallback(() => {
         if (noMoreMessages) {
             return;
@@ -35,7 +37,12 @@ function Home({selectedConversation = null, messages = null}) {
                 setLocalMessages((prevMessages) => [...data.data.reverse(), ...prevMessages]);
             })
     }, [localMessages, noMoreMessages]);
-
+    const onAttachmentClick = (attachments, ind) => {
+        setPreviewAttachment({
+            attachments, ind
+        });
+        setShowAttachmentsPreview(true);
+    }
     const messageCreated = (message) => {
         if (
             selectedConversation &&
@@ -147,6 +154,7 @@ function Home({selectedConversation = null, messages = null}) {
                                     <MessageItem
                                         key={message.id}
                                         message={message}
+                                        attachmentClick={onAttachmentClick}
                                     />
                                 ))}
                             </div>
@@ -155,6 +163,14 @@ function Home({selectedConversation = null, messages = null}) {
                     </div>
                     <MessageInput conversation={selectedConversation}/>
                 </>
+            )}
+            {previewAttachment.attachments && (
+                <AttachmentPreviewModal
+                    attachments={previewAttachment.attachments}
+                    index={previewAttachment.ind}
+                    show={showAttachmentsPreview}
+                    onClose={() => setShowAttachmentsPreview(false)}
+                />
             )}
         </>
     );
