@@ -10,7 +10,9 @@ import {
 import NewMessageInput from "./NewMessageInput";
 import EmojiPicker from "emoji-picker-react";
 import {Popover, Transition} from '@headlessui/react'
-import {isImage} from "@/helpers.jsx";
+import {isAudio, isImage} from "@/helpers.jsx";
+import AttachmentPreview from "@/Components/App/AttachmentPreview.jsx";
+import CustomAudioPlayer from "@/Components/App/CustomAudioPlayer.jsx";
 
 const MessageInput = ({conversation = null}) => {
     const [newMessage, setNewMessage] = useState("");
@@ -29,6 +31,8 @@ const MessageInput = ({conversation = null}) => {
 
         });
         setChosenFile((prevFiles) => [...prevFiles, ...updatedFiles])
+        ev.target.value = null;
+
     }
     const onLikeClick = () => {
         if (messageSending) {
@@ -59,7 +63,7 @@ const MessageInput = ({conversation = null}) => {
         if (messageSending) {
             return;
         }
-        if (newMessage.trim() === "") {
+        if (newMessage.trim() === "" && chosenFile.length === 0) {
             setInputErrorMessages("Please enter a message or attach a file");
             setTimeout(() => {
                 setInputErrorMessages("");

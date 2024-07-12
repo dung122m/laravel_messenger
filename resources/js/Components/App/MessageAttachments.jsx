@@ -18,21 +18,17 @@ const MessageAttachments = ({attachments, attachmentClick}) => {
                                     justify-center text-gray-100 bg-gray-700 rounded absolute
                                      right-0 top-0 cursor-pointer  hover:bg-gray-800">
                                         <ArrowDownTrayIcon className="w-4 h-4"/>
-
-
                                     </a>
                                 )}
                                 {isImage(attachment) && (
                                     <img src={attachment.url} alt="" className="object-contain aspect-square"/>)}
-                                {isvideo(attachment) && (
+                                {isVideo(attachment) && (
                                     <div className="relative flex justify-center items-center">
                                         <PlayCircleIcon className="z-20 absolute w-16 h-16 text-white opacity-70"/>
                                         <div className="absolute left-0 top-0 w-full h-full bg-black/50 z-10"></div>
                                         <video src={attachment.url}></video>
-
-
                                     </div>
-                                )}I
+                                )}
                                 {isAudio(attachment) && <div className="relative flex justify-center items-center">
                                     <audio src={attachment.url} controls></audio>
                                     )
