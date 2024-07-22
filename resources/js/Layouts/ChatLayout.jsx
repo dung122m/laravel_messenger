@@ -4,6 +4,7 @@ import TextInput from "@/Components/TextInput.jsx";
 import ConversationItem from "@/Components/App/ConversationItem.jsx";
 import {PencilSquareIcon} from "@heroicons/react/24/solid";
 import {useEventBus} from "@/EventBus.jsx";
+
 const ChatLayout = ({children}) => {
     const page = usePage();
     const conversations = page.props.conversation;
@@ -17,7 +18,7 @@ const ChatLayout = ({children}) => {
         setLocalConversations(
             conversations.filter(
                 (conversation) => {
-                  return conversation.name.toLowerCase().includes(search)
+                    return conversation.name.toLowerCase().includes(search)
                 }
             )
         )
@@ -44,10 +45,19 @@ const ChatLayout = ({children}) => {
             })
         });
     }
+    const messageDeleted = ({prevMessage}) => {
+        if (!prevMessage) {
+            return;
+        }
+
+        messageCreated(prevMessage);
+    }
     useEffect(() => {
         const offCreated = on('message.create', messageCreated);
+        const offDeleted = on('message.deleted', messageDeleted);
         return () => {
             offCreated();
+            offDeleted();
 
         }
     }, [on]);
@@ -63,7 +73,7 @@ const ChatLayout = ({children}) => {
                     return a.blocked_at > b.blocked_at ? 1 : -1;
                 } else if (a.blocked_at) {
                     return 1;
-                } else if(b.blocked_at) {
+                } else if (b.blocked_at) {
                     return -1;
                 }
                 if (a.last_message_date && b.last_message_date) {
@@ -72,7 +82,7 @@ const ChatLayout = ({children}) => {
                     );
                 } else if (a.last_message_date) {
                     return -1;
-                } else if(b.last_message_date) {
+                } else if (b.last_message_date) {
                     return 1;
                 } else {
                     return 0;
@@ -89,19 +99,19 @@ const ChatLayout = ({children}) => {
                 );
 
                 setOnlineUsers((prevOnlineUsers) => {
-                    return { ...prevOnlineUsers, ...onlineUsersObject}
+                    return {...prevOnlineUsers, ...onlineUsersObject}
                 });
             })
             .joining((user) => {
                 setOnlineUsers((prevOnlineUsers) => {
-                    const updatedUsers = { ...prevOnlineUsers };
+                    const updatedUsers = {...prevOnlineUsers};
                     updatedUsers[user.id] = user;
                     return updatedUsers;
                 })
             })
             .leaving((user) => {
                 setOnlineUsers((prevOnlineUsers) => {
-                    const updatedUsers = { ...prevOnlineUsers };
+                    const updatedUsers = {...prevOnlineUsers};
                     delete updatedUsers[user.id];
                     return updatedUsers;
                 })
@@ -115,7 +125,7 @@ const ChatLayout = ({children}) => {
     }, []);
 
 
-    return(
+    return (
         <div className="flex-1 w-full overflow-hidden flex">
             <div
                 className={`transition-all w-full sm:w-[220px] md:w-[300px] flex flex-col bg-slate-800 overflow-hidden ${

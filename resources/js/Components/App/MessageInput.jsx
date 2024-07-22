@@ -9,7 +9,7 @@ import {
 } from "@heroicons/react/24/solid";
 import NewMessageInput from "./NewMessageInput";
 import EmojiPicker from "emoji-picker-react";
-import {Popover, Transition} from '@headlessui/react'
+import {Popover} from '@headlessui/react'
 import {isAudio, isImage} from "@/helpers.jsx";
 import AttachmentPreview from "@/Components/App/AttachmentPreview.jsx";
 import CustomAudioPlayer from "@/Components/App/CustomAudioPlayer.jsx";
@@ -21,6 +21,7 @@ const MessageInput = ({conversation = null}) => {
     const [messageSending, setMessageSending] = useState(false);
     const [chosenFile, setChosenFile] = useState([]);
     const [uploadProgress, setUploadProgress] = useState(0);
+
     const onFileChange = (ev) => {
         const files = ev.target.files;
         const updatedFiles = [...files].map((file) => {
@@ -69,6 +70,7 @@ const MessageInput = ({conversation = null}) => {
 
     }
     const onSendClick = () => {
+
         if (messageSending) {
             return;
         }
