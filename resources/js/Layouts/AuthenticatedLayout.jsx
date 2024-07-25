@@ -7,12 +7,17 @@ import {Link, usePage} from '@inertiajs/react';
 import {useEventBus} from "@/EventBus";
 import Toast from "@/Components/App/Toast.jsx";
 import NewMessageNotification from "@/Components/App/NewMessageNotification.jsx";
+import UserAvatar from "@/Components/App/UserAvatar.jsx";
+import PrimaryButton from "@/Components/PrimaryButton.jsx";
+import {UserPlusIcon} from "@heroicons/react/24/solid/index.js";
+import NewUserModal from "@/Components/App/NewUserModal.jsx";
 
 export default function Authenticated({header, children}) {
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
     const page = usePage();
     const conversations = page.props.conversation;
     const user = page.props.auth.user;
+    const [showNewUserModal, setShowNewUserModal] = useState(false);
     const {emit} = useEventBus();
     useEffect(() => {
         conversations.forEach((conversation) => {
@@ -94,7 +99,13 @@ export default function Authenticated({header, children}) {
                             </div>
 
                             <div className="hidden sm:flex sm:items-center sm:ms-6">
-                                <div className="ms-3 relative">
+                                <div className=" flex ms-3 relative">
+                                    {user.is_admin && (
+                                        <PrimaryButton onClick = {ev => setShowNewUserModal(true)}>
+                                            <UserPlusIcon className="h-5 w-5 mr-2"/>
+                                            Add new User
+                                        </PrimaryButton>
+                                    )}
                                     <Dropdown>
                                         <Dropdown.Trigger>
                                         <span className="inline-flex rounded-md">
@@ -127,6 +138,9 @@ export default function Authenticated({header, children}) {
                                             </Dropdown.Link>
                                         </Dropdown.Content>
                                     </Dropdown>
+                                </div>
+                                <div className="flex items-center">
+                                    <UserAvatar user={user}/>
                                 </div>
                             </div>
 
@@ -191,6 +205,7 @@ export default function Authenticated({header, children}) {
 
             <Toast/>
             <NewMessageNotification/>
+            <NewUserModal show={showNewUserModal} onClose={ev => setShowNewUserModal(false)}/>
 
         </>
     );

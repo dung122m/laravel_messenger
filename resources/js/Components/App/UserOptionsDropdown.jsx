@@ -1,17 +1,19 @@
 import {Menu, Transition} from "@headlessui/react";
 import {Fragment} from "react";
 import {ShieldCheckIcon, UserIcon} from "@heroicons/react/24/solid";
+import {useEventBus} from "@/EventBus.jsx";
 
 export default function UserOptionsDropdown({conversation}) {
-
+    const {emit} = useEventBus();
     const changeUserRole = () => {
-        console.log("Change user role");
+
         if (!conversation.is_user) {
             return;
         }
         axios.post(route("user.changeRole", conversation.id))
             .then((res) => {
-                console.log(res.data);
+                emit("toast.show", res.data.message)
+
 
             })
             .catch((error) => {
@@ -19,13 +21,14 @@ export default function UserOptionsDropdown({conversation}) {
             });
     }
     const onBlockUser = () => {
-        console.log("Block user");
+
         if (!conversation.is_user) {
             return;
         }
-        axios.post("user.blockUnblock", conversation.id)
+        axios.post(route("user.blockUnblock", conversation.id))
             .then((res) => {
-                console.log(res.data);
+                emit("toast.show", res.data.message)
+
             })
             .catch((error) => {
                 console.log(error.response.data);
